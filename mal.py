@@ -1,5 +1,6 @@
 from bs4 import BeautifulSoup
-import ast, re, requests
+import re
+import requests
 import pandas as pd
 # library to generate user agent
 from user_agent import generate_user_agent
@@ -21,19 +22,19 @@ except requests.Timeout as e:
     print(str(e))
 
 tables = page_content.find_all('table',{'class':'list-table'})
-table_items = re.findall(r'data-items=.*>', str(tables[0]).replace('&quot;', '"').replace('\\', ''))
-# list_final = list(str(table_items[0])[14:-4].split('},{'))
-list_final = list(str(table_items[0])[14:-4].split('},{'))
+table_items = re.findall(r'data-items="(\[.*\])">', str(tables[0])\
+                    .replace('\\&quot;', "'")\
+                    .replace('&quot;', '"'))
 
-def addbr(inp):
-    return str('{' + inp + '}').replace('true', 'True').replace('false', 'False').replace('null', ' None')
+df = pd.read_json(table_items[0])
 
-dict_list = list(map(ast.literal_eval, list(map(addbr,list_final))))
-df = pd.DataFrame(dict_list)
-finaldf = df.drop(['status', 'tags', 'anime_id', 'is_rewatching', 'num_watched_episodes', \
+finaldf = df.drop(['status', 'created_at', 'updated_at', 'tags', 'anime_id', 'is_rewatching', 'num_watched_episodes', \
                 'anime_studios', 'anime_licensors', 'anime_season', 'anime_airing_status', \
                 'has_episode_video', 'has_promotion_video', 'has_video', 'video_url', \
                 'is_added_to_list', 'start_date_string', 'finish_date_string',\
                 'anime_start_date_string', 'anime_end_date_string', 'days_string',\
-                'storage_string', 'priority_string'], axis=1)
-finaldf.columns = ['Score', 'Title', 'Episodes', 'url', 'image_path', 'type', 'mpaa_rating']
+                'storage_string', 'priority_string', 'notes', 'editable_notes', 'title_localized',\
+                'anime_title_eng', 'anime_total_members', 'anime_total_scores',\
+                'demographics'], axis=1)
+# finaldf.columns = ['Score', 'Title', 'Episodes', 'url', 'image_path', 'type', 'mpaa_rating']
+finaldf.to_csv('mal.csv', sep=';', encoding='utf-8')
