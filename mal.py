@@ -1,5 +1,6 @@
 from bs4 import BeautifulSoup
 import re
+import sys
 import requests
 import pandas as pd
 # library to generate user agent
@@ -7,7 +8,14 @@ from user_agent import generate_user_agent
 # generate a user agent
 headers = {'User-Agent': generate_user_agent(device_type="desktop", os=('mac', 'linux'))}
 # headers = {'User-Agent': 'Mozilla/5.0 (X11; Linux i686 on x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/49.0.2623.63 Safari/537.36'}
-page_link ='https://myanimelist.net/animelist/xzeqtr?status=2'
+
+try:
+    username = sys.argv[1]
+except:
+    print('Invalid argument')
+    sys.exit()
+
+page_link =f'https://myanimelist.net/animelist/{username}?status=2'
 # fetch the content from url
 try:
     page_response = requests.get(page_link, timeout=5, headers=headers)
@@ -16,6 +24,7 @@ try:
         page_content = BeautifulSoup(page_response.content, 'html.parser')
     else:
         print(page_response.status_code)
+        sys.exit()
         # notify, try again
 except requests.Timeout as e:
     print("It is time to timeout")
