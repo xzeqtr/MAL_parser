@@ -3,7 +3,6 @@ import re
 import sys
 import requests
 import pandas as pd
-# library to generate user agent
 from user_agent import generate_user_agent
 
 # generate a user agent
@@ -25,10 +24,9 @@ try:
     else:
         print(page_response.status_code)
         sys.exit()
-        # notify, try again
-except requests.Timeout as e:
-    print("It is time to timeout")
-    print(str(e))
+except:
+    print("Something went wrong :(")
+    sys.exit()
 
 tables = page_content.find_all('table', {'class': 'list-table'})
 table_items = re.findall(r'data-items="(\[.*\])">', str(tables[0]) \
@@ -45,6 +43,15 @@ finaldf = df.drop(['status', 'created_at', 'updated_at', 'tags', 'anime_id', 'is
                    'storage_string', 'priority_string', 'notes', 'editable_notes', 'title_localized',
                    'anime_title_eng', 'anime_total_members', 'anime_total_scores',
                    'demographics'], axis=1)
-# finaldf.columns = ['Score', 'Title', 'Episodes', 'url', 'image_path', 'type', 'mpaa_rating']
-finaldf['genres'] = finaldf['genres'].apply(lambda x: ', '.join(map(lambda x: x['name'], x)))
+finaldf.rename(columns={
+    "score":"User_score",
+    "anime_title":"Title",
+    "anime_num_episodes":"Episodes",
+    "anime_score_val":"Score",
+    "genres":"Genres",
+    "anime_url":"URL",
+    "anime_image_path":"Image",
+    "anime_media_type_string":"Type",
+    "anime_mpaa_rating_string":"Rating"}, inplace=True)
+finaldf['Genres'] = finaldf['Genres'].apply(lambda x: ', '.join(map(lambda x: x['name'], x)))
 finaldf.to_csv('mal.csv', sep=';', encoding='utf-8')
