@@ -12,3 +12,4 @@ six==1.16.0
 soupsieve==2.3.2.post1
 urllib3==1.26.12
 user-agent==0.1.10
+matplotlib==3.7.0
