@@ -88,26 +88,26 @@ score_labels = [str(k)+' - '+str(v) for k, v in zip(score['User_score'], score['
 axs[1][1].pie(
     score['Count'],
     autopct='%.1f%%',
-    labels = score_labels)
+    labels=score_labels)
 axs[1][0].bar(
     score['User_score'],
     score['Count'])
-
 # ========================= Score =========================
 
 # ========================= Genres =========================
-genres = pd.DataFrame.from_dict \
-        (
+genres = pd.DataFrame.from_dict(
         finaldf['Genres']
         .apply(lambda x: pd.value_counts(x.split(", ")))
-        .sum(axis = 0)
-        .reset_index()
-    )
-genres.columns=["Genre", "Quantity"]
+        .sum(axis=0)
+        .reset_index())
+genres.columns = ["Genre", "Quantity"]
 genres = genres.sort_values(by=['Quantity'],  ascending=False)
 axs[0][1].bar(
     genres['Genre'],
     genres['Quantity'])
 # ========================= Genres =========================
-
+axs[1][1].title.set_text('User_score')
+axs[0][1].title.set_text('Genres')
+axs[1][0].title.set_text('User_score')
+axs[0][0].title.set_text('Media Type')
 plt.show()
