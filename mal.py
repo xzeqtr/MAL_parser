@@ -45,35 +45,37 @@ finaldf = df.drop(['status', 'created_at', 'updated_at', 'tags', 'anime_id', 'is
                    'title_localized', 'anime_title_eng', 'anime_total_members',
                    'anime_total_scores', 'demographics'], axis=1)
 finaldf.rename(columns={
-    "score": "User_score",
-    "anime_title": "Title",
-    "anime_num_episodes": "Episodes",
-    "anime_score_val": "Score",
-    "genres": "Genres",
-    "anime_url": "URL",
-    "anime_image_path": "Image",
-    "anime_media_type_string": "Type",
+    "score": "User_score",              "anime_title": "Title",
+    "anime_num_episodes": "Episodes",   "anime_score_val": "Score",
+    "genres": "Genres",                 "anime_url": "URL",
+    "anime_image_path": "Image",        "anime_media_type_string": "Type",
     "anime_mpaa_rating_string": "Rating"}, inplace=True)
-finaldf['Genres'] = finaldf['Genres'].apply(lambda x: ', '.join(map(lambda x: x['name'], x)))
-finaldf.to_csv('mal.csv', sep=';', encoding='utf-8')
 
+finaldf['Genres'] = finaldf['Genres'].apply(lambda x: ', '.join(map(lambda x: x['name'], x)))
+# finaldf.to_csv('mal.csv', sep=';', encoding='utf-8')
+
+fig, axs = plt.subplots(2, 2, figsize=(15, 10))
 # ========================= Types =========================
 types = finaldf['Type'].value_counts().reset_index()
 types.columns = ['Type', 'Count']
 types_labels = [k+' - '+str(v) for k, v in zip(types['Type'], types['Count'])]
 types.set_index('Type', inplace=True)
 
-ax = types.plot.pie(
-    title='Anime type',
-    y='Count',
-    # shadow=True,
+axs[0][0].pie(
+    types['Count'],
     autopct='%.1f%%',
-    explode=[_/10 for _ in range(len(types['Count']))],
-    legend=False,
-    figsize=(9, 6),
-    labels=types_labels)
-ax.set_ylabel(None)
-plt.show()
+    labels = types_labels)
+# ax = types.plot.pie(
+#     title='Anime type',
+#     y='Count',
+#     # shadow=True,
+#     autopct='%.1f%%',
+#     explode=[_/10 for _ in range(len(types['Count']))],
+#     legend=False,
+#     figsize=(9, 6),
+#     labels=types_labels)
+# ax.set_ylabel(None)
+# plt.show()
 # ========================= Types =========================
 
 # ========================= Score =========================
@@ -82,13 +84,30 @@ score.columns = ['User_score', 'Count']
 score.sort_values(by=['User_score'], ascending=False)
 
 score_labels = [str(k)+' - '+str(v) for k, v in zip(score['User_score'], score['Count'])]
-fig, axs = plt.subplots(1, 2, figsize=(9, 6))
-axs[0].pie(
+
+axs[1][1].pie(
     score['Count'],
     autopct='%.1f%%',
     labels = score_labels)
-axs[1].bar(
+axs[1][0].bar(
     score['User_score'],
     score['Count'])
-plt.show()
+
 # ========================= Score =========================
+
+# ========================= Genres =========================
+genres = pd.DataFrame.from_dict \
+        (
+        finaldf['Genres']
+        .apply(lambda x: pd.value_counts(x.split(", ")))
+        .sum(axis = 0)
+        .reset_index()
+    )
+genres.columns=["Genre", "Quantity"]
+genres = genres.sort_values(by=['Quantity'],  ascending=False)
+axs[0][1].bar(
+    genres['Genre'],
+    genres['Quantity'])
+# ========================= Genres =========================
+
+plt.show()
