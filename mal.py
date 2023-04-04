@@ -5,6 +5,8 @@ import requests
 import pandas as pd
 from user_agent import generate_user_agent
 import matplotlib.pyplot as plt
+from matplotlib import cm
+import numpy as np
 
 # generate a user agent
 headers = {'User-Agent': generate_user_agent(device_type="desktop", os=('mac', 'linux'))}
@@ -40,21 +42,21 @@ finaldf = df.drop(['status', 'created_at', 'updated_at', 'tags', 'anime_id', 'is
                    'num_watched_episodes', 'anime_studios', 'anime_licensors', 'anime_season',
                    'anime_airing_status', 'has_episode_video', 'has_promotion_video', 'has_video',
                    'video_url', 'is_added_to_list', 'start_date_string', 'finish_date_string',
-                   'anime_start_date_string', 'anime_end_date_string', 'days_string',
+                   'anime_start_date_string', 'days_string',
                    'storage_string', 'priority_string', 'notes', 'editable_notes',
                    'title_localized', 'anime_title_eng', 'anime_total_members',
                    'anime_total_scores', 'demographics'], axis=1)
 finaldf.rename(columns={
-    "score": "User_score",              "anime_title": "Title",
-    "anime_num_episodes": "Episodes",   "anime_score_val": "Score",
-    "genres": "Genres",                 "anime_url": "URL",
-    "anime_image_path": "Image",        "anime_media_type_string": "Type",
-    "anime_mpaa_rating_string": "Rating"}, inplace=True)
+    "score": "User_score",                "anime_title": "Title",
+    "anime_num_episodes": "Episodes",     "anime_score_val": "Score",
+    "genres": "Genres",                   "anime_url": "URL",
+    "anime_image_path": "Image",          "anime_media_type_string": "Type",
+    "anime_mpaa_rating_string": "Rating", "anime_end_date_string": "Finished_date"}, inplace=True)
 
 finaldf['Genres'] = finaldf['Genres'].apply(lambda x: ', '.join(map(lambda x: x['name'], x)))
 # finaldf.to_csv('mal.csv', sep=';', encoding='utf-8')
 
-fig, axs = plt.subplots(2, 2, figsize=(15, 10))
+fig, axs = plt.subplots(2, 3, figsize=(16, 9))
 # ========================= Types =========================
 types = finaldf['Type'].value_counts().reset_index()
 types.columns = ['Type', 'Count']
@@ -81,7 +83,8 @@ axs[0][0].pie(
 # ========================= Score =========================
 score = finaldf['User_score'].value_counts().reset_index()
 score.columns = ['User_score', 'Count']
-score.sort_values(by=['User_score'], ascending=False)
+score = score[score.User_score != 0]
+score = score.sort_values(by=['User_score'], ascending=False)
 
 score_labels = [str(k)+' - '+str(v) for k, v in zip(score['User_score'], score['Count'])]
 
@@ -89,7 +92,7 @@ axs[1][1].pie(
     score['Count'],
     autopct='%.1f%%',
     labels=score_labels)
-axs[1][0].bar(
+axs[0][1].bar(
     score['User_score'],
     score['Count'])
 # ========================= Score =========================
@@ -102,12 +105,46 @@ genres = pd.DataFrame.from_dict(
         .reset_index())
 genres.columns = ["Genre", "Quantity"]
 genres = genres.sort_values(by=['Quantity'],  ascending=False)
-axs[0][1].bar(
+color = cm.inferno_r(np.linspace(.3, .8, genres['Genre'].count()))
+axs[1][0].bar(
     genres['Genre'],
-    genres['Quantity'])
+    genres['Quantity'],
+    color=color)
 # ========================= Genres =========================
+
+# ====================== Finished_date ======================
+fdates = finaldf['Finished_date']\
+         .apply(lambda x: x[6:])\
+         .value_counts()\
+         .reset_index()
+fdates.columns = ["Year", "Quantity"]
+
+fdates['Year'] = fdates['Year'] \
+    .astype(str) \
+    .str.replace(r'\b\d{2}\b',
+                 lambda x: f'20{x.group()}'
+                 if int(x.group()) < 50
+                 else f'19{x.group()}')
+fdates = fdates.sort_values(by=['Year'],  ascending=True)
+color = cm.inferno_r(np.linspace(.3, .8, fdates['Year'].count()))
+axs[1][2].bar(
+    fdates['Year'],
+    fdates['Quantity'],
+    color=color)
+# ====================== Finished_date ======================
+
 axs[1][1].title.set_text('User_score')
 axs[0][1].title.set_text('Genres')
-axs[1][0].title.set_text('User_score')
+axs[1][0].set_xticklabels(genres['Genre'],
+                          rotation=90,
+                          fontsize=7)
+axs[0][1].title.set_text('User_score')
+# axs[0][1].set_xticklabels(score['User_score'],
+#                           fontsize=7)
+print(score)
 axs[0][0].title.set_text('Media Type')
+axs[1][2].title.set_text('Anime year')
+axs[1][2].set_xticklabels(fdates['Year'],
+                          rotation=90,
+                          fontsize=7)
 plt.show()
